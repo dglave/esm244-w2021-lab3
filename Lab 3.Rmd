@@ -1,0 +1,95 @@
+---
+title: "Lab 3"
+author: "Dylan Glave"
+date: "1/25/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(palmerpenguins)
+library(jtools)
+library(GGally)
+library(broom)
+```
+
+## Part 1: Binary/binomial Logistic Regression
+
+
+Exploring Penguin data to make pairs plot. These show multivariate examples of the variables across many different plot types. 
+
+```{r}
+penguins %>% 
+  select(species, bill_length_mm:sex) %>% 
+  ggpairs(aes(color = species))
+```
+
+Create a subset with only Adelie and Chinstrap Penguins
+Since Gentoo is a 'factor,' it keeps a third factor level in the df, even though there are 0 abservations. 
+```{r}
+adelie_chinstrap <- penguins %>% 
+  filter(species %in% c("Adelie", "Chinstrap")) %>% 
+  mutate(species = fct_drop(species))
+```
+
+I'll make a graph of how jsut these two compare. 
+
+```{r}
+ggplot(data = adelie_chinstrap, aes(x = body_mass_g, y = flipper_length_mm)) +
+  geom_point(aes(color = sex)) +
+  facet_wrap(~species)
+```
+
+We saw some general patterns that chistraps were a bit alrger (both x and y.) We'll see how binary logistic regression can decifer this. 
+
+### Binary Logistic Regression 
+- body mass
+- flipper length
+- penguin sex
+
+
+```{r}
+adelie_chinstrap_blr <- glm(species ~ body_mass_g + flipper_length_mm + sex,
+                            data = adelie_chinstrap, 
+                            family = "binomial")
+  
+
+
+```
+
+Look at the outcomes 
+
+```{r}
+adelie_chinstrap_blr
+
+summary(adelie_chinstrap_blr)
+```
+
+Mass have a value of -8*10^4. 
+Adelie is the reference level, or the O in binary. Since Mass is negative, as mass increases, the P(Chinstrap) goes down. 
+Flipper length is positive. So, as flipper length increases, an onbservation has a higher possibility of being a Chinstrap Penguin. 
+We want to align the coefficients in the above model, with what we ACTUALLY see in the date
+
+```{r}
+ggplot(data = adelie_chinstrap, aes(x = species, y = flipper_length_mm)) +
+  geom_jitter(aes(color  = sex))
+```
+
+Since it's challenging to understand Log Odds, from the regression. We ask, what are the actual probabilities of being a chinstrap for each of the existing observations in our adelie_chinstrap df
+
+Augment will add on a column with a probability, based on the model, of being a Chinstrap. The base function would give log odds, we'll translate it to P()
+
+```{r}
+blr_fitted <- adelie_chinstrap_blr %>% 
+  broom::augment(type.predict = "response")
+
+
+```
+
+
+
+```{r}
+
+```
+
